@@ -9,6 +9,7 @@ import { Contract, ethers as eth } from "ethers"
 
 import { AddressZero, Zero } from "ethers/constants";
 import { formatEther, parseEther } from "ethers/utils"
+import { hexlify, randomBytes } from "ethers/utils";
 
 // TODO: ged rid off if possible
 import interval from "interval-promise"; // TODO: don not install and replace to setInterval
@@ -17,8 +18,11 @@ import { interpret } from "xstate";
 import { cleanWalletConnect,initWalletConnect } from "./utils/clientWalletConnectMapping";
 import { fromExtendedKey, fromMnemonic } from "ethers/utils/hdnode";
 
+// TODO: Move to another file
+//import React, { useEffect, useState } from "react";
+
 // TODO: recheck why we need this
-// TODO: avois autoswap
+// TODO: avoid autoswap
 import tokenArtifacts from "openzeppelin-solidity/build/contracts/ERC20Mintable.json";
 
 const styles = theme => ({
@@ -77,6 +81,59 @@ const WITHDRAW_ESTIMATED_GAS = toBN("300000");
 const DEPOSIT_ESTIMATED_GAS = toBN("25000");
 const MAX_CHANNEL_VALUE = Currency.DAI("30");
 
+const split = (balance) => {
+	const bal = balance.format({ decimals: 3, symbol: false });
+	const whole = bal.substring(0, bal.indexOf('.'));
+	const part = bal.substring(bal.indexOf('.'));
+	return { whole, part: part.substring(0,4) };
+}
+
+/*
+export const useXpub = (initialXpub, ethProvider) => {
+  const [network, setNetwork] = useState(null);
+  const [display, setDisplay] = useState(initialXpub);
+  const [resolved, setResolved] = useState(false);
+  const [value, setValue] = useState(null);
+  const [error, setError] = useState(null);
+  const debounced = useDebounce(display, 1000);
+  useEffect(() => {
+    (async () => {
+      await ethProvider.ready;
+      const network = await ethProvider.getNetwork();
+      setNetwork(network);
+    })()
+  }, [ethProvider]);
+  useEffect(() => {
+    (async () => {
+      if (debounced === null) return;
+      const xpubLen = 111;
+      let value = debounced;
+      let error = null;
+      setResolved(false);
+      if (network && network.ensAddress && value.endsWith(".eth")) {
+        setResolved("pending");
+        value = await resolveXpub(value, ethProvider, network);
+        setResolved(true);
+      }
+      if (value && value.endsWith(".eth")) {
+        error = `Network "${network.name}" (chainId ${network.chainId}) doesn"t support ENS`;
+      } else if (!value || !value.startsWith("xpub")) {
+        error = `Invalid xpub: should start with "xpub"`;
+      }
+      if (!error && value.length !== xpubLen) {
+        error = `Invalid length: ${value.length} (expected ${xpubLen})`;
+      }
+      setValue(error ? undefined : value);
+      setError(error);
+    })()
+  }, [debounced, ethProvider, network]);
+  return [
+    { display, value, error, resolved },
+    setDisplay,
+    setError,
+  ];
+}*/
+
 class ConnextView extends Component {
 
 	constructor(props) {
@@ -110,6 +167,16 @@ class ConnextView extends Component {
 			state: machine.initialState, //TODO: use own states
 			swapRate,
 			token: null,
+
+			recipient: {
+				value: "xpub6E2NNBuWqTbUZoewmoXB3QKx2ewB9651Kd7DXjyWMsxUfZfL7jp1fxFSJYWzvTBwFLw1VhbAA7J8uqpyy3zsZoqGtitM2zrTUEudr2eQBnd",
+				error: null,
+			},
+			amount: {
+				display: "",
+				error: null,
+				value: Currency.DAI(1),
+			}
 		};
 
 		this.refreshBalances.bind(this);
@@ -118,6 +185,8 @@ class ConnextView extends Component {
 		/*this.parseQRCode.bind(this);*/
 		this.setWalletConnext.bind(this);
 		this.getWalletConnext.bind(this);
+
+		this.paymentHandler.bind(this);
 	}
 
 	// ************************************************* //
@@ -410,28 +479,28 @@ class ConnextView extends Component {
 		const freeEtherBalance = await channel.getFreeBalance();
 		const freeTokenBalance = await channel.getFreeBalance(token.address);
 
+		// On Chain
 		balance.onChain.ether = Currency.WEI(
 			await ethProvider.getBalance(channel.signerAddress),
 			swapRate,
 		).toETH();
-
 		balance.onChain.token = Currency.DEI(
 			await token.balanceOf(channel.signerAddress),
 			swapRate,
 		).toDAI();
-
 		balance.onChain.total = getTotal(balance.onChain.ether, balance.onChain.token).toETH();
+
+		// Channel
 		balance.channel.ether = Currency.WEI(
 		freeEtherBalance[channel.freeBalanceAddress],
 		swapRate,
 		).toETH();
-
 		balance.channel.token = Currency.DEI(
 			freeTokenBalance[channel.freeBalanceAddress],
 			swapRate,
 		).toDAI();
-
 		balance.channel.total = getTotal(balance.channel.ether, balance.channel.token).toETH();
+
 		const logIfNotZero = (wad, prefix) => {
 		if (wad.isZero()) {
 		  return;
@@ -617,6 +686,65 @@ class ConnextView extends Component {
 		machine.send(["SUCCESS_SWAP"]);
 	};
 
+
+	paymentHandler = async () => {
+
+		console.log(">>> paymentHandler: ")
+		const {
+			balance,
+			channel,
+			token,
+			amount,
+			recipient,
+		} = this.state;
+
+
+		//const [recipient, setRecipient, setRecipientError] = useXpub(null, ethProvider);
+
+		if (!channel || !token || amount.error || recipient.error) return;
+		if (!recipient.value) {
+			console.log("Recipent must be specified for p2p transfer")
+			//setRecipientError("Recipent must be specified for p2p transfer");
+			return;
+		}
+		console.log(`Sending ${amount.value} to ${recipient.value}`);
+		console.log(`NEW_P2P`);
+		//paymentAction("NEW_P2P"); // machine state
+
+		// there is a chance the payment will fail when it is first sent
+		// due to lack of collateral. collateral will be auto-triggered on the
+		// hub side. retry for 1min, then fail
+		const endingTs = Date.now() + 60 * 1000;
+		let transferRes = undefined;
+		while (Date.now() < endingTs) {
+			console.log(`payment .....`);
+			try {
+			  transferRes = await channel.conditionalTransfer({
+				assetId: token.address,
+				amount: amount.value.wad.toString(),
+				conditionType: "LINKED_TRANSFER_TO_RECIPIENT",
+				paymentId: hexlify(randomBytes(32)),
+				preImage: hexlify(randomBytes(32)),
+				recipient: recipient.value,
+				meta: { source: "daicard" }
+			  });
+			  console.log(`payment .....try:`, transferRes);
+			  break;
+			} catch (e) {
+				console.log(`payment .....error:`, e);
+				await new Promise(res => setTimeout(res, 5000));
+			}
+		}
+
+		if (!transferRes) {
+			console.log(`paymentAction ERROR:`, transferRes);
+			//paymentAction("ERROR");
+			return;
+		}
+		console.log(`paymentAction DONE`);
+		//paymentAction("DONE");
+	};
+
 	render() {
 
 	const {
@@ -631,28 +759,55 @@ class ConnextView extends Component {
 		state,
 		token,
 		wallet,
+		amount,
+		recipient,
 	} = this.state;
 
 	const address = wallet ? wallet.address : channel ? channel.signerAddress : AddressZero;
-    //const { classes } = this.props;
+	const { classes } = this.props;
 
-	/*
+	/*logIfNotZero(balance.onChain.token.wad, `chain token balance`);
+	logIfNotZero(balance.onChain.ether.wad, `chain ether balance`);
+
+	logIfNotZero(balance.channel.token.wad, `channel token balance`);
+	logIfNotZero(balance.channel.ether.wad, `channel ether balance`);*/
+
+
 	const minEth = minDeposit ? minDeposit.toETH().format() : '?.??'
 	const maxEth = maxDeposit ? maxDeposit.toETH().format() : '?.??'
 	const maxDai = maxDeposit ? maxDeposit.toDAI().format() : '?.??'
 
 	var depositTo = `Deposit to address: ${address}`
 	var depositMaxMin = `maxDeposit=${maxEth} minDeposit=${minEth}`
+
+	//var onChannel = `Deposited on Channel: ERC20 = ${balance.channel.token.toDAI()}, ETH = ${balance.channel.ether.toETH()}`
+
+	//var onChain = `On-Chain: ERC20 = ${balance.onChain.token.toDAI()}, ETH = ${balance.onChain.ether.toETH()}`
+
 	var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
 
 	var onChain = `On-Chain: ERC20 = ${split(balance.onChain.token.toDAI()).whole}${split(balance.onChain.token.toDAI()).part}, ETH = ${split(balance.onChain.ether.toETH()).whole}${split(balance.onChain.ether.toETH()).part}`
-	*/
+
 	return <div>
 			<div>{ address }</div>
-			{saiBalance.wad.gt(0)
-				? <div>Sai Balance: { saiBalance } </div>
-				: <div>Sai Balance: { 0 }</div>
-			 }
+			<div>{ onChannel }</div>
+			<div>{ onChain }</div>
+			<Button
+				disableTouchRipple
+				className={classes.button}
+				disabled={
+					!!amount.error ||
+					!!recipient.error
+				}
+				fullWidth
+				onClick={() => {
+					this.paymentHandler();
+				}}
+				size="large"
+				variant="contained"
+				>
+				Send
+			</Button>
 		</div>
 	}
 
