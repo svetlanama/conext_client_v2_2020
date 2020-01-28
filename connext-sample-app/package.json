@@ -4,14 +4,21 @@
   "private": true,
   "dependencies": {
     "@connext/client": "^4.0.6",
+    "@connext/store": "^4.0.6",
+    "@connext/types": "^4.0.6",
     "@material-ui/core": "^4.9.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.4.0",
     "@testing-library/user-event": "^7.2.1",
+    "@walletconnect/browser": "^1.0.0-beta.46",
+    "@xstate/react": "^0.8.1",
     "ethers": "^4.0.43",
+    "interval-promise": "^1.4.0",
+    "openzeppelin-solidity": "^2.4.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-scripts": "3.3.0"
+    "react-scripts": "3.3.0",
+    "xstate": "^4.7.7"
   },
   "scripts": {
     "start": "react-scripts start",
