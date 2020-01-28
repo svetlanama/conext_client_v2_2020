@@ -9,7 +9,9 @@ import { Contract, ethers as eth } from "ethers"
 
 import { AddressZero, Zero } from "ethers/constants";
 import { formatEther, parseEther } from "ethers/utils"
-import { hexlify, randomBytes } from "ethers/utils";
+//import { hexlify, randomBytes } from "ethers/utils";
+
+import { paymentHandler } from "./util/sender"
 
 // TODO: ged rid off if possible
 import interval from "interval-promise"; // TODO: don not install and replace to setInterval
@@ -29,6 +31,10 @@ const styles = theme => ({
   icon: {
     width: "40px",
     height: "40px"
+  },
+  base: {
+	textAign: 'left',
+	fontSize: '12px'
   },
   button: {
     backgroundColor: "#FCA311",
@@ -134,6 +140,13 @@ export const useXpub = (initialXpub, ethProvider) => {
   ];
 }*/
 
+const xpubUser1 = "xpub6E9k8Pqor11gkSev3DK4WYi1EeMiFMjh4QB93smc3NCP7HgwFhxfEjMoFVqh619LFz8cuhe17gme1NpZZJZvEHJ8KM33J1a3jgee6AMGyiu"
+// PORT 3333
+const xpubUser2 ="xpub6ENFY3wQyC7VFNybV5S35QRQVNSsTvMChwZZa5DhQM1sLAcPptR1ttjR7t2oYEMmPQCoDsNbn5MSa4Vqf6TXnhnyJGtSNyj3mYap53G5pTt"
+
+// dai
+//const xpubUser2 = "xpub6FK36JNJboy7TopvK1y4rAeEBYccavyKFeTtxKYBqjZhT7MegqTc3pbF9S9mx6jjT3ysN8TsTR6hpYjdQHytSPDqgdqa48fhSwZFtJCr12s"
+
 class ConnextView extends Component {
 
 	constructor(props) {
@@ -143,6 +156,9 @@ class ConnextView extends Component {
 
 		console.log("ENV: ", process.env.REACT_APP_ETH_URL_OVERRIDE)
 		console.log("URLs:", urls)
+
+		console.log("PORT:", window.location.port)
+
 		this.state = {
 			balance: {
 			channel: {
@@ -169,7 +185,7 @@ class ConnextView extends Component {
 			token: null,
 
 			recipient: {
-				value: "xpub6E2NNBuWqTbUZoewmoXB3QKx2ewB9651Kd7DXjyWMsxUfZfL7jp1fxFSJYWzvTBwFLw1VhbAA7J8uqpyy3zsZoqGtitM2zrTUEudr2eQBnd",
+				value:  window.location.port == 3333 ? xpubUser1 : xpubUser2,
 				error: null,
 			},
 			amount: {
@@ -186,7 +202,7 @@ class ConnextView extends Component {
 		this.setWalletConnext.bind(this);
 		this.getWalletConnext.bind(this);
 
-		this.paymentHandler.bind(this);
+		//this.paymentHandler.bind(this);
 	}
 
 	// ************************************************* //
@@ -243,6 +259,7 @@ class ConnextView extends Component {
 			localStorage.setItem("mnemonic", mnemonic);
 		}
 
+		console.log("--- 1 ---- ")
 		//TODO: re-check what is useWalletConnext
 		let wallet;
 		await ethProvider.ready;
@@ -263,6 +280,7 @@ class ConnextView extends Component {
 		machine.send("START");
 		machine.send(["START", "START_START"]);
 
+		console.log("--- 2 ---- ")
 		// if choose mnemonic
 		let channel;
 		if (!useWalletConnext) {
@@ -286,6 +304,7 @@ class ConnextView extends Component {
 				store = new ConnextStore(window.localStorage);
 			}
 
+			console.log("--- 3 ---- ")
 			// If store has double prefixes, flush and restore
 			for (const k of Object.keys(localStorage)) {
 				if (k.includes(`${ConnextClientStorePrefix}:${ConnextClientStorePrefix}/`)) {
@@ -294,12 +313,16 @@ class ConnextView extends Component {
 				}
 			}
 
+			console.log("--- 4 ---- ")
 			const hdNode = fromExtendedKey(fromMnemonic(mnemonic).extendedKey).derivePath(CF_PATH);
 			const xpub = hdNode.neuter().extendedKey;
 			const keyGen = index => {
-			const res = hdNode.derivePath(index);
+				const res = hdNode.derivePath(index);
 				return Promise.resolve(res.privateKey);
 			};
+			console.log("--- 4.1 ---- ")
+			console.log("keyGen:  ", keyGen)
+			console.log("xpub:  ", xpub)
 			channel = await connext.connect({
 				ethProviderUrl: urls.ethProviderUrl,
 				keyGen,
@@ -354,6 +377,7 @@ class ConnextView extends Component {
 		);
 		const swapRate = await channel.getLatestSwapRate(AddressZero, token.address);
 
+		console.log("--- 5 ---- ")
 		console.log(`Client created successfully!`);
 		console.log(` - Public Identifier: ${channel.publicIdentifier}`);
 		console.log(` - Account multisig address: ${channel.multisigAddress}`);
@@ -385,6 +409,7 @@ class ConnextView extends Component {
 			machine.send("ERROR_RECEIVE");
 		});
 
+		console.log("--- 6 ---- ")
 		this.setState({
 			channel,
 			useWalletConnext,
@@ -392,14 +417,15 @@ class ConnextView extends Component {
 			token,
 		});
 
-		const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
+		/*const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
 		if (saiBalance && saiBalance.wad.gt(0)) {
 			this.setState({ saiBalance });
 			machine.send("SAI");
 		} else {
 			machine.send("READY");
-		}
+		}*/
 
+		console.log("--- 7 ---- ")
 		this.initWalletConnext(network.chainId);
 		await this.startPoller();
 	}
@@ -687,7 +713,7 @@ class ConnextView extends Component {
 	};
 
 
-	paymentHandler = async () => {
+	/*paymentHandler = async () => {
 
 		console.log(">>> paymentHandler: ")
 		const {
@@ -743,7 +769,7 @@ class ConnextView extends Component {
 		}
 		console.log(`paymentAction DONE`);
 		//paymentAction("DONE");
-	};
+	};*/
 
 	render() {
 
@@ -763,15 +789,9 @@ class ConnextView extends Component {
 		recipient,
 	} = this.state;
 
-	const address = wallet ? wallet.address : channel ? channel.signerAddress : AddressZero;
+	const address = `addr: ${ wallet ? wallet.address : channel ? channel.signerAddress : AddressZero }`;
+	const xpub = `xpub: ${ channel ? channel.publicIdentifier : "Unknown" }`
 	const { classes } = this.props;
-
-	/*logIfNotZero(balance.onChain.token.wad, `chain token balance`);
-	logIfNotZero(balance.onChain.ether.wad, `chain ether balance`);
-
-	logIfNotZero(balance.channel.token.wad, `channel token balance`);
-	logIfNotZero(balance.channel.ether.wad, `channel ether balance`);*/
-
 
 	const minEth = minDeposit ? minDeposit.toETH().format() : '?.??'
 	const maxEth = maxDeposit ? maxDeposit.toETH().format() : '?.??'
@@ -784,13 +804,17 @@ class ConnextView extends Component {
 
 	//var onChain = `On-Chain: ERC20 = ${balance.onChain.token.toDAI()}, ETH = ${balance.onChain.ether.toETH()}`
 
-	var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
+	var onChannel = `Balance: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}`
 
-	var onChain = `On-Chain: ERC20 = ${split(balance.onChain.token.toDAI()).whole}${split(balance.onChain.token.toDAI()).part}, ETH = ${split(balance.onChain.ether.toETH()).whole}${split(balance.onChain.ether.toETH()).part}`
+	//var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
 
-	return <div>
-			<div>{ address }</div>
-			<div>{ onChannel }</div>
+	var onChain = ""
+	//`On-Chain: ERC20 = ${split(balance.onChain.token.toDAI()).whole}${split(balance.onChain.token.toDAI()).part}, ETH = ${split(balance.onChain.ether.toETH()).whole}${split(balance.onChain.ether.toETH()).part}`
+
+	return <div className={classes.base}>
+			<div className={classes.base}><p>{ address }</p></div>
+			<div><p>{ xpub }</p></div>
+			<div><p>{ onChannel }</p></div>
 			<div>{ onChain }</div>
 			<Button
 				disableTouchRipple
@@ -801,12 +825,12 @@ class ConnextView extends Component {
 				}
 				fullWidth
 				onClick={() => {
-					this.paymentHandler();
+					paymentHandler(balance, channel, token, amount, recipient);
 				}}
 				size="large"
 				variant="contained"
 				>
-				Send
+				{ `Send ${ amount.value } ERC-20`}
 			</Button>
 		</div>
 	}
