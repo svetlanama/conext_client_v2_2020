@@ -385,6 +385,8 @@ class ConnextView extends Component {
 			token,
 		});
 
+		// This is important
+		// Probably need to ged rid off machine
 		const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
 		if (saiBalance && saiBalance.wad.gt(0)) {
 			this.setState({ saiBalance });
@@ -710,15 +712,17 @@ class ConnextView extends Component {
 	const maxDai = maxDeposit ? maxDeposit.toDAI().format() : '?.??'
 
 	var depositTo = `Deposit to address: ${address}`
-	var depositMaxMin = `maxDeposit=${maxEth} minDeposit=${minEth}`
+	var depositMaxMin = `maxDeposit ETH=${maxEth} DAI=${maxDai}`
 
 	//var onChannel = `Deposited on Channel: ERC20 = ${balance.channel.token.toDAI()}, ETH = ${balance.channel.ether.toETH()}`
 
 	//var onChain = `On-Chain: ERC20 = ${balance.onChain.token.toDAI()}, ETH = ${balance.onChain.ether.toETH()}`
 
-	//var onChannel = `Balance: ERC20 = ${balance.channel.token.wad}`
+	var onChannel = `Balance: ERC20 = ${balance.channel.token
+                  .toDAI(swapRate)
+                  .format({ decimals: 2, symbol: false, round: false })}`
 
-	var onChannel = `Balance: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}`
+	//var onChannel = `Balance: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}`
 
 	//var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
 
@@ -727,6 +731,7 @@ class ConnextView extends Component {
 
 	return <div className={classes.base}>
 			<div className={classes.base}><p>{ address }</p></div>
+			<div>{ depositMaxMin }</div>
 			<div><p>{ xpub }</p></div>
 			<div><p>{ onChannel }</p></div>
 			<div>{ onChain }</div>
@@ -754,6 +759,7 @@ class ConnextView extends Component {
 					}
 					fullWidth
 					onClick={() => {
+						//balance, channel, token, recipient, swapRate, parent
 						cashoutEther(balance, channel, token, withdrawn.recipient, swapRate, this);
 					}}
 					size="large"
@@ -770,6 +776,7 @@ class ConnextView extends Component {
 					}
 					fullWidth
 					onClick={() => {
+						//balance, channel, token, recipient
 						cashoutTokens(balance, channel, token, withdrawn.recipient);
 					}}
 					size="large"
