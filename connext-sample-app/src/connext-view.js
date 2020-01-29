@@ -12,6 +12,7 @@ import { formatEther, parseEther } from "ethers/utils"
 //import { hexlify, randomBytes } from "ethers/utils";
 
 import { paymentHandler } from "./util/sender"
+import { cashoutEther, cashoutTokens} from "./util/cashout"
 
 // TODO: ged rid off if possible
 import interval from "interval-promise"; // TODO: don not install and replace to setInterval
@@ -20,36 +21,34 @@ import { interpret } from "xstate";
 import { cleanWalletConnect,initWalletConnect } from "./utils/clientWalletConnectMapping";
 import { fromExtendedKey, fromMnemonic } from "ethers/utils/hdnode";
 
-// TODO: Move to another file
-//import React, { useEffect, useState } from "react";
-
 // TODO: recheck why we need this
 // TODO: avoid autoswap
 import tokenArtifacts from "openzeppelin-solidity/build/contracts/ERC20Mintable.json";
 
 const styles = theme => ({
-  icon: {
-    width: "40px",
-    height: "40px"
-  },
-  base: {
-	textAign: 'left',
-	fontSize: '12px'
-  },
-  button: {
-    backgroundColor: "#FCA311",
-    color: "#FFF"
-  },
-  modal: {
-    position: "absolute",
-    top: "-400px",
-    left: "150px",
-    width: theme.spacing(50),
-    backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(4),
-    outline: "none"
-  }
+	icon: {
+		width: "40px",
+		height: "40px"
+	},
+	base: {
+		textAign: 'left',
+		fontSize: '12px'
+	},
+	button: {
+		paggingTop: '20px',
+		backgroundColor: "#FCA311",
+		color: "#FFF"
+	},
+	modal: {
+		position: "absolute",
+		top: "-400px",
+		left: "150px",
+		width: theme.spacing(50),
+		backgroundColor: theme.palette.background.paper,
+		boxShadow: theme.shadows[5],
+		padding: theme.spacing(4),
+		outline: "none"
+	}
 });
 
 // LogLevel for testing ChannelProvider
@@ -94,58 +93,14 @@ const split = (balance) => {
 	return { whole, part: part.substring(0,4) };
 }
 
-/*
-export const useXpub = (initialXpub, ethProvider) => {
-  const [network, setNetwork] = useState(null);
-  const [display, setDisplay] = useState(initialXpub);
-  const [resolved, setResolved] = useState(false);
-  const [value, setValue] = useState(null);
-  const [error, setError] = useState(null);
-  const debounced = useDebounce(display, 1000);
-  useEffect(() => {
-    (async () => {
-      await ethProvider.ready;
-      const network = await ethProvider.getNetwork();
-      setNetwork(network);
-    })()
-  }, [ethProvider]);
-  useEffect(() => {
-    (async () => {
-      if (debounced === null) return;
-      const xpubLen = 111;
-      let value = debounced;
-      let error = null;
-      setResolved(false);
-      if (network && network.ensAddress && value.endsWith(".eth")) {
-        setResolved("pending");
-        value = await resolveXpub(value, ethProvider, network);
-        setResolved(true);
-      }
-      if (value && value.endsWith(".eth")) {
-        error = `Network "${network.name}" (chainId ${network.chainId}) doesn"t support ENS`;
-      } else if (!value || !value.startsWith("xpub")) {
-        error = `Invalid xpub: should start with "xpub"`;
-      }
-      if (!error && value.length !== xpubLen) {
-        error = `Invalid length: ${value.length} (expected ${xpubLen})`;
-      }
-      setValue(error ? undefined : value);
-      setError(error);
-    })()
-  }, [debounced, ethProvider, network]);
-  return [
-    { display, value, error, resolved },
-    setDisplay,
-    setError,
-  ];
-}*/
-
+//User1
 const xpubUser1 = "xpub6E9k8Pqor11gkSev3DK4WYi1EeMiFMjh4QB93smc3NCP7HgwFhxfEjMoFVqh619LFz8cuhe17gme1NpZZJZvEHJ8KM33J1a3jgee6AMGyiu"
-// PORT 3333
-const xpubUser2 ="xpub6ENFY3wQyC7VFNybV5S35QRQVNSsTvMChwZZa5DhQM1sLAcPptR1ttjR7t2oYEMmPQCoDsNbn5MSa4Vqf6TXnhnyJGtSNyj3mYap53G5pTt"
 
-// dai
-//const xpubUser2 = "xpub6FK36JNJboy7TopvK1y4rAeEBYccavyKFeTtxKYBqjZhT7MegqTc3pbF9S9mx6jjT3ysN8TsTR6hpYjdQHytSPDqgdqa48fhSwZFtJCr12s"
+//User2 PORT 3333
+//const xpubUser2 ="xpub6DkE7LEQAmpbMUCiFBpDpxb7MbECbnGMDatDkZinyedYKiS7xrg1oSMfESYbzc5HSdDE7NemT9owKRhtu9j32saKebuZETe3ejscX7fLzPY"
+
+// dai example
+const xpubUser2 = "xpub6Ej6F3De8btwVRCgzqWtV1SZDy7NSuFeqpzzmtu2X2fAzu9fejUXrNcEEiXvEJeHxE4ZdnUAcVg4HYdUGTnMDtFZbZ19inXc9kuJAa4k8aD"
 
 class ConnextView extends Component {
 
@@ -183,15 +138,28 @@ class ConnextView extends Component {
 			state: machine.initialState, //TODO: use own states
 			swapRate,
 			token: null,
-
-			recipient: {
-				value:  window.location.port == 3333 ? xpubUser1 : xpubUser2,
-				error: null,
+			send: {
+				recipient: {
+					value: window.location.port == 3333 ? xpubUser1 : xpubUser2,
+					error: null,
+				},
+				amount: {
+					display: "",
+					error: null,
+					value: Currency.DAI(1),
+				}
 			},
-			amount: {
-				display: "",
-				error: null,
-				value: Currency.DAI(1),
+
+			withdrawn: {
+				recipient: {
+					value: "0x27c6762675B685257311Fd15FB6c163e02c337d5",
+					error: null,
+				},
+				amount: {
+					display: "",
+					error: null,
+					value: Currency.DAI(1),
+				}
 			}
 		};
 
@@ -417,13 +385,13 @@ class ConnextView extends Component {
 			token,
 		});
 
-		/*const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
+		const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
 		if (saiBalance && saiBalance.wad.gt(0)) {
 			this.setState({ saiBalance });
 			machine.send("SAI");
 		} else {
 			machine.send("READY");
-		}*/
+		}
 
 		console.log("--- 7 ---- ")
 		this.initWalletConnext(network.chainId);
@@ -713,63 +681,7 @@ class ConnextView extends Component {
 	};
 
 
-	/*paymentHandler = async () => {
 
-		console.log(">>> paymentHandler: ")
-		const {
-			balance,
-			channel,
-			token,
-			amount,
-			recipient,
-		} = this.state;
-
-
-		//const [recipient, setRecipient, setRecipientError] = useXpub(null, ethProvider);
-
-		if (!channel || !token || amount.error || recipient.error) return;
-		if (!recipient.value) {
-			console.log("Recipent must be specified for p2p transfer")
-			//setRecipientError("Recipent must be specified for p2p transfer");
-			return;
-		}
-		console.log(`Sending ${amount.value} to ${recipient.value}`);
-		console.log(`NEW_P2P`);
-		//paymentAction("NEW_P2P"); // machine state
-
-		// there is a chance the payment will fail when it is first sent
-		// due to lack of collateral. collateral will be auto-triggered on the
-		// hub side. retry for 1min, then fail
-		const endingTs = Date.now() + 60 * 1000;
-		let transferRes = undefined;
-		while (Date.now() < endingTs) {
-			console.log(`payment .....`);
-			try {
-			  transferRes = await channel.conditionalTransfer({
-				assetId: token.address,
-				amount: amount.value.wad.toString(),
-				conditionType: "LINKED_TRANSFER_TO_RECIPIENT",
-				paymentId: hexlify(randomBytes(32)),
-				preImage: hexlify(randomBytes(32)),
-				recipient: recipient.value,
-				meta: { source: "daicard" }
-			  });
-			  console.log(`payment .....try:`, transferRes);
-			  break;
-			} catch (e) {
-				console.log(`payment .....error:`, e);
-				await new Promise(res => setTimeout(res, 5000));
-			}
-		}
-
-		if (!transferRes) {
-			console.log(`paymentAction ERROR:`, transferRes);
-			//paymentAction("ERROR");
-			return;
-		}
-		console.log(`paymentAction DONE`);
-		//paymentAction("DONE");
-	};*/
 
 	render() {
 
@@ -785,8 +697,8 @@ class ConnextView extends Component {
 		state,
 		token,
 		wallet,
-		amount,
-		recipient,
+		send,
+		withdrawn,
 	} = this.state;
 
 	const address = `addr: ${ wallet ? wallet.address : channel ? channel.signerAddress : AddressZero }`;
@@ -804,6 +716,8 @@ class ConnextView extends Component {
 
 	//var onChain = `On-Chain: ERC20 = ${balance.onChain.token.toDAI()}, ETH = ${balance.onChain.ether.toETH()}`
 
+	//var onChannel = `Balance: ERC20 = ${balance.channel.token.wad}`
+
 	var onChannel = `Balance: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}`
 
 	//var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
@@ -820,18 +734,50 @@ class ConnextView extends Component {
 				disableTouchRipple
 				className={classes.button}
 				disabled={
-					!!amount.error ||
-					!!recipient.error
+					!!send.amount.error ||
+					!!send.recipient.error
 				}
 				fullWidth
 				onClick={() => {
-					paymentHandler(balance, channel, token, amount, recipient);
+					paymentHandler(balance, channel, token, send.amount, send.recipient);
 				}}
 				size="large"
 				variant="contained"
 				>
-				{ `Send ${ amount.value } ERC-20`}
+				{ `Send ${ send.amount.value } ERC-20`}
 			</Button>
+			<div>
+				<Button
+					disableTouchRipple
+					className={classes.button}
+					disabled={!withdrawn.recipient.value
+					}
+					fullWidth
+					onClick={() => {
+						cashoutEther(balance, channel, token, withdrawn.recipient, swapRate, this);
+					}}
+					size="large"
+					variant="contained"
+					>
+					{ `Cashout ETH`}
+				</Button>
+			</div>
+			<div>
+				<Button
+					disableTouchRipple
+					className={classes.button}
+					disabled={!withdrawn.recipient.value
+					}
+					fullWidth
+					onClick={() => {
+						cashoutTokens(balance, channel, token, withdrawn.recipient);
+					}}
+					size="large"
+					variant="contained"
+					>
+					{ `Cashout ERC-20`}
+				</Button>
+			</div>
 		</div>
 	}
 
