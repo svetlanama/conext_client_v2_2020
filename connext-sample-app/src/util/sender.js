@@ -3,15 +3,6 @@ import { hexlify, randomBytes } from "ethers/utils";
 export const paymentHandler = async (balance, channel, token, amount, recipient) => {
 
 	console.log(">>> paymentHandler: ")
-	/*const {
-		balance,
-		channel,
-		token,
-		amount,
-		recipient,
-	} = this.state;*/
-
-
 	//const [recipient, setRecipient, setRecipientError] = useXpub(null, ethProvider);
 
 	if (!channel || !token || amount.error || recipient.error) return;
