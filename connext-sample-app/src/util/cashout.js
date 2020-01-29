@@ -1,7 +1,13 @@
 import { toBN, inverse, minBN, tokenToWei, weiToToken } from '../utils/bn'
 import { AddressZero, Zero } from "ethers/constants";
 
-export const cashoutTokens = async (balance, channel, token, recipient) => {
+export const cashoutTokens = async (balance, channel, token, recipient, machine) => {
+	console.log("ERC20 balance:", balance)
+	console.log("ERC20 channel:", channel)
+	console.log("ERC20 token:", token)
+	console.log("ERC20 recipient:", recipient)
+
+
 	const value = recipient.value;
 	if (!channel || !value) return;
 
@@ -9,7 +15,7 @@ export const cashoutTokens = async (balance, channel, token, recipient) => {
 	if (total.wad.lte(Zero)) return;
 
 	// Put lock on actions, no more autoswaps until we're done withdrawing
-	//machine.send("START_WITHDRAW");
+	machine.send("START_WITHDRAW");
 	console.log("START_WITHDRAW: ")
 	// TODO: think about states
 	//setWithdrawing(true);
@@ -24,10 +30,16 @@ export const cashoutTokens = async (balance, channel, token, recipient) => {
 	// TODO: think about states
 	//setWithdrawing(false);
 	console.log("SUCCESS_WITHDRAW: ", txHash)
-	//machine.send("SUCCESS_WITHDRAW", { txHash });
+	machine.send("SUCCESS_WITHDRAW", { txHash });
 };
 
-export const cashoutEther = async (balance, channel, token, recipient, swapRate, parent) => {
+export const cashoutEther = async (balance, channel, token, recipient, swapRate, refreshBalances, machine) => {
+	console.log("ETH balance:", balance)
+	console.log("ETH channel:", channel)
+	console.log("ETH token:", token)
+	console.log("ETH recipient:", recipient)
+	console.log("ETH swapRate:", swapRate)
+	console.log("ETH refreshBalances:", refreshBalances)
 	const value = recipient.value;
 	if (!channel || !value) return;
 
@@ -35,7 +47,7 @@ export const cashoutEther = async (balance, channel, token, recipient, swapRate,
 	if (total.wad.lte(Zero)) return;
 
 	// Put lock on actions, no more autoswaps until we're done withdrawing
-	//machine.send("START_WITHDRAW");
+	machine.send("START_WITHDRAW");
 	console.log("START_WITHDRAW: ")
 	// TODO: think about states
 	//setWithdrawing(true);
@@ -51,9 +63,9 @@ export const cashoutEther = async (balance, channel, token, recipient, swapRate,
 		});
 		//TODO: call this somehow via parent
 		console.log("Balance is zero:", balance.channel.token.wad)
-		await parent.refreshBalances();
+		//await refreshBalances();
 	}
-
+	console.log(">>> channel.withdraw:")
 	const result = await channel.withdraw({
 		amount: balance.channel.ether.wad.toString(),
 		assetId: AddressZero,
@@ -64,5 +76,5 @@ export const cashoutEther = async (balance, channel, token, recipient, swapRate,
 	const txHash = result.transaction.hash;
 	//setWithdrawing(false);
 	console.log("SUCCESS_WITHDRAW: ", txHash)
-	//machine.send("SUCCESS_WITHDRAW", { txHash });
+	machine.send("SUCCESS_WITHDRAW", { txHash });
 };

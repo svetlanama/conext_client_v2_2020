@@ -11,6 +11,9 @@ import { AddressZero, Zero } from "ethers/constants";
 import { formatEther, parseEther } from "ethers/utils"
 //import { hexlify, randomBytes } from "ethers/utils";
 
+// backup service
+import { PisaClient } from "pisa-client";
+
 import { paymentHandler } from "./util/sender"
 import { cashoutEther, cashoutTokens} from "./util/cashout"
 
@@ -94,13 +97,13 @@ const split = (balance) => {
 }
 
 //User1
-const xpubUser1 = "xpub6E9k8Pqor11gkSev3DK4WYi1EeMiFMjh4QB93smc3NCP7HgwFhxfEjMoFVqh619LFz8cuhe17gme1NpZZJZvEHJ8KM33J1a3jgee6AMGyiu"
+const xpubUser1 = "xpub6F9PFkzoyNJ68Je5LpGmamaecvnBaagbyxbYwT8LnDabFXhRL4T3LdJXmKDpbMj9pCn7ojtWdKLPyFGHsNxtZonDMZBBKJeLbCZqjta6BJh"
 
 //User2 PORT 3333
-//const xpubUser2 ="xpub6DkE7LEQAmpbMUCiFBpDpxb7MbECbnGMDatDkZinyedYKiS7xrg1oSMfESYbzc5HSdDE7NemT9owKRhtu9j32saKebuZETe3ejscX7fLzPY"
+const xpubUser2 ="xpub6Exz34UffBp4SaPQK1BF61M4fCiNsZyZDzXZFNya4e4Xnz3g5t7XoBq1whv83fgg8uay5oSW7NtrrcGucSs7eZFH8YF6V9H9X3sXFFKDQme"
 
 // dai example
-const xpubUser2 = "xpub6Ej6F3De8btwVRCgzqWtV1SZDy7NSuFeqpzzmtu2X2fAzu9fejUXrNcEEiXvEJeHxE4ZdnUAcVg4HYdUGTnMDtFZbZ19inXc9kuJAa4k8aD"
+//const xpubUser2 = "xpub6ErQntFmhG2DRw2FBsYfPuKVrsJRdw8opUk44E2aKznSnypjTSrNzA2TbAb2j6eEV4UHNDYF9HvgGhDXAMWhnR77q1KccjJrJaKmMCcahtu"
 
 class ConnextView extends Component {
 
@@ -163,6 +166,7 @@ class ConnextView extends Component {
 			}
 		};
 
+		this.initialSetup.bind(this)
 		this.refreshBalances.bind(this);
 		this.autoDeposit.bind(this);
 		this.autoSwap.bind(this);
@@ -207,9 +211,16 @@ class ConnextView extends Component {
 
 	// Channel doesn't get set up until after provider is set
 	async componentDidMount() {
-		const { machine } = this.state;
+		this.initialSetup()
+	}
+
+	async initialSetup() {
+		const { machine, state } = this.state;
+
+		console.log("componentDidMount state: ", state)
 		machine.start();
 		machine.onTransition(state => {
+			console.log("state: ", state)
 			this.setState({ state });
 			console.log(
 			`=== Transitioning to ${JSON.stringify(state.value)} (context: ${JSON.stringify(
@@ -238,7 +249,7 @@ class ConnextView extends Component {
 		}
 
 		// migrate if needed
-		// TODO: do not concider migration for now
+		// TODO: do not concider migration for now we don't have old version
 		/*if (wallet && localStorage.getItem("rpc-prod")) {
 			machine.send(["MIGRATE", "START_MIGRATE"]);
 			await migrate(urls.legacyUrl(network.chainId), wallet, urls.ethProviderUrl);
@@ -262,23 +273,31 @@ class ConnextView extends Component {
 				const backupService = new PisaClientBackupAPI({
 				  wallet,
 				  pisaClient: new PisaClient(
-				    pisaUrl,
-				    "0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", // TODO: Don't hardcode
+					pisaUrl,
+					"0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", // TODO: Don't hardcode
 				  ),
 				});
-				store = new ConnextStore(window.localStorage, { backupService });
-				*/
+				store = new ConnextStore(window.localStorage, { backupService });*/
+
+				console.log("--- 2.0 ---- ")
+				//store = new ConnextStore(window.localStorage);
 			} else {
+				console.log("--- 2.1 ---- ")
 				store = new ConnextStore(window.localStorage);
 			}
 
 			console.log("--- 3 ---- ")
+			console.log("--- store:", store)
+			console.log("--- ConnextClientStorePrefix:", ConnextClientStorePrefix)
+
 			// If store has double prefixes, flush and restore
 			for (const k of Object.keys(localStorage)) {
 				if (k.includes(`${ConnextClientStorePrefix}:${ConnextClientStorePrefix}/`)) {
+				//if (k.includes(`${ConnextClientStorePrefix}/`)) {
 					store && (await store.reset());
 					window.location.reload();
 				}
+
 			}
 
 			console.log("--- 4 ---- ")
@@ -291,22 +310,44 @@ class ConnextView extends Component {
 			console.log("--- 4.1 ---- ")
 			console.log("keyGen:  ", keyGen)
 			console.log("xpub:  ", xpub)
-			channel = await connext.connect({
-				ethProviderUrl: urls.ethProviderUrl,
-				keyGen,
-				logLevel: LOG_LEVEL,
-				nodeUrl: urls.nodeUrl,
-				store,
-				xpub,
-			});
-			console.log(`mnemonic address: ${wallet.address} (path: ${wallet.path})`);
-			console.log(`xpub address: ${eth.utils.computeAddress(fromExtendedKey(xpub).publicKey)}`);
-			console.log(
-			`keygen address: ${new eth.Wallet(await keyGen("1")).address} (path ${
-			  new eth.Wallet(await keyGen("1")).path
-			})`,
-			);
-	    } else if (useWalletConnext) {
+			//try {
+				channel = await connext.connect({
+					ethProviderUrl: urls.ethProviderUrl,
+					keyGen,
+					logLevel: LOG_LEVEL,
+					nodeUrl: urls.nodeUrl,
+					store,
+					xpub,
+				});
+
+				console.log(`mnemonic address: ${wallet.address} (path: ${wallet.path})`);
+				console.log(`xpub address: ${eth.utils.computeAddress(fromExtendedKey(xpub).publicKey)}`);
+				console.log(
+				`keygen address: ${new eth.Wallet(await keyGen("1")).address} (path ${
+				  new eth.Wallet(await keyGen("1")).path
+				})`,
+				);
+			/*} catch {
+				console.error("Some error occurs during connext.connect: ");
+
+				// TODO: clean local storage excpet mnemonic
+				for (const k of Object.keys(localStorage)) {
+					if (k.substring(0, 4).includes(`xpub`)) {
+						//store && (await store.reset());
+						localStorage.removeItem(k);
+						console.error("==== 4.2 store.reset==== ", k);
+						//window.location.reload();
+					} else if (k.includes(`${ConnextClientStorePrefix}/`)) {
+						store && (await store.reset());
+						console.error("==== 4.2 store.reset==== ", k);
+						//window.location.reload();
+					}
+				}
+
+				//window.location.reload();
+			}*/
+
+		} else if (useWalletConnext) {
 			console.error("Configurated useWalletConnext.");
 			//TODO: uncomment implementation
 
@@ -335,7 +376,7 @@ class ConnextView extends Component {
 			console.error("Could not create channel.");
 			return;
 		}
-		console.log(`Successfully connected channel`);
+		console.log(`Successfully connected channel: `, channel);
 
 		//TODO: internal token $ - we need to find the way do not make swap
 		const token = new Contract(
@@ -387,13 +428,19 @@ class ConnextView extends Component {
 
 		// This is important
 		// Probably need to ged rid off machine
-		const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
+		/*const saiBalance = Currency.DEI(await this.getSaiBalance(ethProvider), swapRate);
 		if (saiBalance && saiBalance.wad.gt(0)) {
+			console.log(">>> SAI")
 			this.setState({ saiBalance });
+			//this.setState({ state: "sai" });
 			machine.send("SAI");
 		} else {
+			console.log(">>> ELSE READY")
+			//this.setState({ state: "ready" });
 			machine.send("READY");
-		}
+		}*/
+
+		machine.send("READY");
 
 		console.log("--- 7 ---- ")
 		this.initWalletConnext(network.chainId);
@@ -523,6 +570,8 @@ class ConnextView extends Component {
 			swapRate,
 			token,
 		} = this.state;
+
+		//console.log(">>> state.matches:", state)
 		if (!state.matches("ready")) {
 			console.warn(`Channel not available yet.`);
 			return;
@@ -551,6 +600,7 @@ class ConnextView extends Component {
 
 		if (balance.onChain.token.wad.gt(Zero) || balance.onChain.ether.wad.gt(minDeposit.wad)) {
 			machine.send(["START_DEPOSIT"]);
+			//this.setState({ state: "pending" });
 
 			if (balance.onChain.token.wad.gt(Zero)) {
 			  const amount = minBN([
@@ -578,6 +628,7 @@ class ConnextView extends Component {
 				  `cap of ${maxDeposit.toDAI(swapRate).format()}`,
 			  );
 			  machine.send(["SUCCESS_DEPOSIT"]);
+			  //this.setState({ state: "pending" });
 			  return;
 			}
 			if (balance.onChain.ether.wad.lt(minDeposit.wad)) {
@@ -703,6 +754,7 @@ class ConnextView extends Component {
 		withdrawn,
 	} = this.state;
 
+	//console.log(">>>> RENDER: ", state)
 	const address = `addr: ${ wallet ? wallet.address : channel ? channel.signerAddress : AddressZero }`;
 	const xpub = `xpub: ${ channel ? channel.publicIdentifier : "Unknown" }`
 	const { classes } = this.props;
@@ -718,7 +770,7 @@ class ConnextView extends Component {
 
 	//var onChain = `On-Chain: ERC20 = ${balance.onChain.token.toDAI()}, ETH = ${balance.onChain.ether.toETH()}`
 
-	var onChannel = `Balance: ERC20 = ${balance.channel.token
+	var onChannel = `OnChannel: ERC20 = ${balance.channel.token
                   .toDAI(swapRate)
                   .format({ decimals: 2, symbol: false, round: false })}`
 
@@ -726,7 +778,9 @@ class ConnextView extends Component {
 
 	//var onChannel = `Deposited on Channel: ERC20 = ${split(balance.channel.token.toDAI()).whole}${split(balance.channel.token.toDAI()).part}, ETH = ${split(balance.channel.ether.toETH()).whole}${split(balance.channel.ether.toETH()).part}`
 
-	var onChain = ""
+	var onChain = `OnChain: ERC20 = ${balance.onChain.token
+                  .toDAI(swapRate)
+                  .format({ decimals: 2, symbol: false, round: false })}`
 	//`On-Chain: ERC20 = ${split(balance.onChain.token.toDAI()).whole}${split(balance.onChain.token.toDAI()).part}, ETH = ${split(balance.onChain.ether.toETH()).whole}${split(balance.onChain.ether.toETH()).part}`
 
 	return <div className={classes.base}>
@@ -760,7 +814,7 @@ class ConnextView extends Component {
 					fullWidth
 					onClick={() => {
 						//balance, channel, token, recipient, swapRate, parent
-						cashoutEther(balance, channel, token, withdrawn.recipient, swapRate, this);
+						cashoutEther(balance, channel, token, withdrawn.recipient, swapRate, this.refreshBalances.bind(this), machine);
 					}}
 					size="large"
 					variant="contained"
@@ -777,7 +831,7 @@ class ConnextView extends Component {
 					fullWidth
 					onClick={() => {
 						//balance, channel, token, recipient
-						cashoutTokens(balance, channel, token, withdrawn.recipient);
+						cashoutTokens(balance, channel, token, withdrawn.recipient, machine);
 					}}
 					size="large"
 					variant="contained"
