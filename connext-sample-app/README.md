@@ -1,12 +1,18 @@
 ## RUN
 
 ```connext-sample-app```
+
 ```npm install```
+
 ```npm start``` - user 1
+
 ```PORT=333 npm start``` - user 2
 
-After getting xpub set them to variables 
+
+**After getting xpub set them to variables**
+
 xpubUser1 - PORT 3000
+
 xpubUser2  - PORT 3333
 
 To setup account for withdraw:
