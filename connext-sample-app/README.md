@@ -52,5 +52,4 @@ put you eth address withdrawn -> recipient -> value
 - cashout TOKENS: YES
 
 **Note:**
-- Safari can't see that xpub.... are store in local storage apart from others
 - From time-to-time some errors occured which need to be handled
