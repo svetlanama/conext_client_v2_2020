@@ -14,7 +14,7 @@ put you eth address withdrawn -> recipient -> value
 
 ## TEST RESULTS
 
-Chrome:
+**Chrome:**
 deposit ETH: +
 deposit tokens:  +
 
@@ -23,7 +23,7 @@ receiving tokens: +
 cashout ETH: + , error (when you are sending many times to one account, known issue)
 cashout TOKENS: +
 
-FF:
+**FF:**
 deposit ETH: +
 deposit tokens:  + (stay on Chain) - can take 2-5 mins to move on Channel (working case after depositing ETH) (screen )
 
@@ -34,7 +34,7 @@ cashout ETH: + , error (when you are sending many times to one account)
 cashout TOKENS: +
 
 
-Safari:
+**Safari:**
 deposit ETH:
 deposit tokens: + (stay on Chain) -  can take 2-5 mins to move on Channel (working case after depositing ETH)
 
@@ -44,6 +44,6 @@ receiving tokens: +
 cashout ETH:+
 cashout TOKENS: +
 
-Note:
+**Note:**
 Safari can't see that xpub.... are store in local storage apart from others
 from time-to-time some errors occured which need to be handled
