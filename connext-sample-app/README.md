@@ -6,7 +6,7 @@
 
 ```npm start``` - user 1
 
-```PORT=333 npm start``` - user 2
+```PORT=3333 npm start``` - user 2
 
 
 **After getting xpub set them to variables**
