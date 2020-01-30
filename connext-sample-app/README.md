@@ -21,8 +21,8 @@ put you eth address withdrawn -> recipient -> value
 ## TEST RESULTS
 
 **Chrome:**
-deposit ETH: +
-deposit tokens:  +
+- deposit ETH: +
+- deposit tokens:  +
 
 send tokens: + (sometimes troubles)
 receiving tokens: +
