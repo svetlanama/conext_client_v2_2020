@@ -12,15 +12,15 @@ xpubUser2  - PORT 3333
 To setup account for withdraw:
 put you eth address withdrawn -> recipient -> value
 
-## TEST TESULTS
+## TEST RESULTS
 
-Chrome
+Chrome:
 deposit ETH: +
 deposit tokens:  +
 
 send tokens: + (sometimes troubles)
 receiving tokens: +
-cashout ETH: + , error (when you are sending many times to one account)
+cashout ETH: + , error (when you are sending many times to one account, known issue)
 cashout TOKENS: +
 
 FF:
@@ -45,5 +45,5 @@ cashout ETH:+
 cashout TOKENS: +
 
 Note:
-can't see that xpub.... are store in local storage apart from others
+Safari can't see that xpub.... are store in local storage apart from others
 from time-to-time some errors occured which need to be handled
