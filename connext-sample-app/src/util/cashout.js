@@ -63,7 +63,7 @@ export const cashoutEther = async (balance, channel, token, recipient, swapRate,
 		});
 		//TODO: call this somehow via parent
 		console.log("Balance is zero:", balance.channel.token.wad)
-		//await refreshBalances();
+		await refreshBalances();
 	}
 	console.log(">>> channel.withdraw:")
 	const result = await channel.withdraw({

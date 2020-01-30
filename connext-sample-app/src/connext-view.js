@@ -155,7 +155,7 @@ class ConnextView extends Component {
 
 			withdrawn: {
 				recipient: {
-					value: "0x27c6762675B685257311Fd15FB6c163e02c337d5",
+					value: "0x21F63E63808692B9eFDdBdE4AEF4452dAE5FE632",//"0x27c6762675B685257311Fd15FB6c163e02c337d5",
 					error: null,
 				},
 				amount: {
