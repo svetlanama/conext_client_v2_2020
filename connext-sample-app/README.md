@@ -1,6 +1,6 @@
 ## RUN
 
-```connext-sample-app```
+```cd connext-sample-app```
 
 ```npm install```
 
