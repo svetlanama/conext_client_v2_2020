@@ -21,35 +21,36 @@ put you eth address withdrawn -> recipient -> value
 ## TEST RESULTS
 
 **Chrome:**
-- deposit ETH: +
-- deposit tokens:  +
+- deposit ETH: YES
+- deposit tokens:  YES
 
-send tokens: + (sometimes troubles)
-receiving tokens: +
-cashout ETH: + , error (when you are sending many times to one account, known issue)
-cashout TOKENS: +
+- send tokens: YES (sometimes troubles)
+- receiving tokens: YES
+
+- cashout ETH: YES , error (when you are sending many times to one account, known issue)
+- cashout TOKENS: YES
 
 **FF:**
-deposit ETH: +
-deposit tokens:  + (stay on Chain) - can take 2-5 mins to move on Channel (working case after depositing ETH) (screen )
+- deposit ETH: YES
+- deposit tokens:  YES (stay on Chain) - can take 2-5 mins to move on Channel (working case after depositing ETH) (screen )
 
-send tokens: +
-receiving tokens: +
+- send tokens: YES
+- receiving tokens: YES
 
-cashout ETH: + , error (when you are sending many times to one account)
-cashout TOKENS: +
+- cashout ETH: YES , error (when you are sending many times to one account)
+- cashout TOKENS: YES
 
 
 **Safari:**
-deposit ETH:
-deposit tokens: + (stay on Chain) -  can take 2-5 mins to move on Channel (working case after depositing ETH)
+- deposit ETH: YES
+- deposit tokens: YES (stay on Chain) -  can take 2-5 mins to move on Channel (working case after depositing ETH)
 
-send tokens:+
-receiving tokens: +
+- send tokens: YES
+- receiving tokens: YES
 
-cashout ETH:+
-cashout TOKENS: +
+- cashout ETH: YES
+- cashout TOKENS: YES
 
 **Note:**
-Safari can't see that xpub.... are store in local storage apart from others
-from time-to-time some errors occured which need to be handled
+- Safari can't see that xpub.... are store in local storage apart from others
+- From time-to-time some errors occured which need to be handled
