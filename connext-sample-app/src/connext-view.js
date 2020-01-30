@@ -100,7 +100,7 @@ const split = (balance) => {
 const xpubUser1 = "xpub6F9PFkzoyNJ68Je5LpGmamaecvnBaagbyxbYwT8LnDabFXhRL4T3LdJXmKDpbMj9pCn7ojtWdKLPyFGHsNxtZonDMZBBKJeLbCZqjta6BJh"
 
 //User2 PORT 3333
-const xpubUser2 ="xpub6Exz34UffBp4SaPQK1BF61M4fCiNsZyZDzXZFNya4e4Xnz3g5t7XoBq1whv83fgg8uay5oSW7NtrrcGucSs7eZFH8YF6V9H9X3sXFFKDQme"
+const xpubUser2 ="xpub6EPbieML9jjSdMFFtJVACZHezv8f5SZeyWm1gne6TXwWpqKBKRvQ89AWsUKsqy9xdMrA59pK26i2Gk6Uh6wuXjZCJUTZfm3vGNkKeBLnQro"
 
 // dai example
 //const xpubUser2 = "xpub6ErQntFmhG2DRw2FBsYfPuKVrsJRdw8opUk44E2aKznSnypjTSrNzA2TbAb2j6eEV4UHNDYF9HvgGhDXAMWhnR77q1KccjJrJaKmMCcahtu"
