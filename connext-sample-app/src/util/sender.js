@@ -30,7 +30,7 @@ export const paymentHandler = async (balance, channel, token, amount, recipient)
 			paymentId: hexlify(randomBytes(32)),
 			preImage: hexlify(randomBytes(32)),
 			recipient: recipient.value,
-			meta: { source: "daicard" }
+			meta: { source: "daicard meta data" }
 		  });
 		  console.log(`payment .....try:`, transferRes);
 		  break;
@@ -45,6 +45,6 @@ export const paymentHandler = async (balance, channel, token, amount, recipient)
 		//paymentAction("ERROR");
 		return;
 	}
-	console.log(`paymentAction DONE`);
+	console.log(`paymentAction DONE: `, transferRes);
 	//paymentAction("DONE");
 };

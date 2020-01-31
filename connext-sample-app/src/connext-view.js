@@ -100,7 +100,11 @@ const split = (balance) => {
 const xpubUser1 = "xpub6F9PFkzoyNJ68Je5LpGmamaecvnBaagbyxbYwT8LnDabFXhRL4T3LdJXmKDpbMj9pCn7ojtWdKLPyFGHsNxtZonDMZBBKJeLbCZqjta6BJh"
 
 //User2 PORT 3333
-const xpubUser2 ="xpub6EPbieML9jjSdMFFtJVACZHezv8f5SZeyWm1gne6TXwWpqKBKRvQ89AWsUKsqy9xdMrA59pK26i2Gk6Uh6wuXjZCJUTZfm3vGNkKeBLnQro"
+//FF:
+const xpubUser2="xpub6FEJYdkRnJdDcqjLXxZyqswNXPCFz9Qa1UNVTumEAyX3kM6XnW2rxv2nSAwazVLyUBmPuBp43mUnwfH1bmGmgswvn36iw8sWfquaVEVzDFk"
+
+//Safari
+//const xpubUser2 ="xpub6EPbieML9jjSdMFFtJVACZHezv8f5SZeyWm1gne6TXwWpqKBKRvQ89AWsUKsqy9xdMrA59pK26i2Gk6Uh6wuXjZCJUTZfm3vGNkKeBLnQro"
 
 // dai example
 //const xpubUser2 = "xpub6ErQntFmhG2DRw2FBsYfPuKVrsJRdw8opUk44E2aKznSnypjTSrNzA2TbAb2j6eEV4UHNDYF9HvgGhDXAMWhnR77q1KccjJrJaKmMCcahtu"
@@ -155,7 +159,7 @@ class ConnextView extends Component {
 
 			withdrawn: {
 				recipient: {
-					value: "0x21F63E63808692B9eFDdBdE4AEF4452dAE5FE632",//"0x27c6762675B685257311Fd15FB6c163e02c337d5",
+					value: "0x27c6762675B685257311Fd15FB6c163e02c337d5",//"0x21F63E63808692B9eFDdBdE4AEF4452dAE5FE632",//"0x27c6762675B685257311Fd15FB6c163e02c337d5",
 					error: null,
 				},
 				amount: {
