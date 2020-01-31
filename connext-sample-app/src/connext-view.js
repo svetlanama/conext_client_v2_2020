@@ -237,6 +237,11 @@ class ConnextView extends Component {
 		let mnemonic = localStorage.getItem("mnemonic");
 		const useWalletConnext = this.getWalletConnext() || false;
 		console.debug("useWalletConnext: ", useWalletConnext);
+		if (!mnemonic && window.location.port == 3333) { // && account exosted in our DB
+			//TODO: we need to ask enter mnemonic here
+			mnemonic = "version public long wave clarify decline glide health rally rebuild receive crunch";
+			localStorage.setItem("mnemonic", mnemonic);
+		}
 		if (!mnemonic) {
 			mnemonic = eth.Wallet.createRandom().mnemonic;
 			localStorage.setItem("mnemonic", mnemonic);
@@ -270,20 +275,20 @@ class ConnextView extends Component {
 			let store;
 			const pisaUrl = urls.pisaUrl(network.chainId);
 			if (pisaUrl) {
-				console.error("Configurated pisaUrl.");
+				console.error("Configurated pisaUrl:", wallet);
 				//TODO: uncomment implementation
 
-				/*console.log(`Using external state backup service: ${pisaUrl}`);
+				console.log(`Using external state backup service: ${pisaUrl}`);
 				const backupService = new PisaClientBackupAPI({
 				  wallet,
 				  pisaClient: new PisaClient(
 					pisaUrl,
-					"0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", // TODO: Don't hardcode
+					"0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", //PISA_CONTRACT_ADDRESS TODO: Don't hardcode
 				  ),
 				});
-				store = new ConnextStore(window.localStorage, { backupService });*/
+				store = new ConnextStore(window.localStorage, { backupService });
 
-				console.log("--- 2.0 ---- ")
+				//console.log("--- 2.0 ---- ")
 				//store = new ConnextStore(window.localStorage);
 			} else {
 				console.log("--- 2.1 ---- ")
