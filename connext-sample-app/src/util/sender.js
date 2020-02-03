@@ -1,8 +1,14 @@
 import { hexlify, randomBytes } from "ethers/utils";
+import { useMachine } from "@xstate/react";
+import { sendMachine } from "../state/send";
+
+
 
 export const paymentHandler = async (balance, channel, token, amount, recipient) => {
 
-	console.log(">>> paymentHandler: ")
+	//console.log(">>> paymentHandler: ", sendMachine)
+	//TODO: here
+	//const [paymentState, paymentAction] = useMachine(sendMachine);
 	//const [recipient, setRecipient, setRecipientError] = useXpub(null, ethProvider);
 
 	if (!channel || !token || amount.error || recipient.error) return;
@@ -23,7 +29,8 @@ export const paymentHandler = async (balance, channel, token, amount, recipient)
 	while (Date.now() < endingTs) {
 		console.log(`payment .....`);
 		try {
-		  transferRes = await channel.conditionalTransfer({
+			var t0 = performance.now();
+		transferRes = await channel.conditionalTransfer({
 			assetId: token.address,
 			amount: amount.value.wad.toString(),
 			conditionType: "LINKED_TRANSFER_TO_RECIPIENT",
@@ -33,6 +40,11 @@ export const paymentHandler = async (balance, channel, token, amount, recipient)
 			meta: { source: "daicard meta data" }
 		  });
 		  console.log(`payment .....try:`, transferRes);
+		  var t1 = performance.now();
+		  console.log("Call to conditionalTransfer took " + (t1 - t0) + " milliseconds.");
+		  //Call to conditionalTransfer took 5817.46499997098 milliseconds.
+		  //Call to conditionalTransfer took 8299.064999970142 milliseconds.
+		  //Call to conditionalTransfer took 6306.770000024699 milliseconds.
 		  break;
 		} catch (e) {
 			console.log(`payment .....error:`, e);
@@ -47,4 +59,8 @@ export const paymentHandler = async (balance, channel, token, amount, recipient)
 	}
 	console.log(`paymentAction DONE: `, transferRes);
 	//paymentAction("DONE");
+
+	console.log(`paymentAction DONE paymentId: `, transferRes.paymentId);
+	var transferData = await channel.getLinkedTransfer(transferRes.paymentId);
+	console.log("getTransferredInfo: ", transferData)
 };

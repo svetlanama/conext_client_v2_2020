@@ -10,6 +10,7 @@ import { Contract, ethers as eth } from "ethers"
 import { AddressZero, Zero } from "ethers/constants";
 import { formatEther, parseEther } from "ethers/utils"
 //import { hexlify, randomBytes } from "ethers/utils";
+//import { ConnextEvents } from "@connext/types";
 
 // backup service
 import { PisaClient } from "pisa-client";
@@ -55,7 +56,7 @@ const styles = theme => ({
 });
 
 // LogLevel for testing ChannelProvider
-const LOG_LEVEL = 5;
+const LOG_LEVEL = 5; //3;
 
 const overrides = {
 	nodeUrl: 'wss://rinkeby.indra.connext.network/api/messaging',
@@ -177,6 +178,7 @@ class ConnextView extends Component {
 		/*this.parseQRCode.bind(this);*/
 		this.setWalletConnext.bind(this);
 		this.getWalletConnext.bind(this);
+		this.getTransferredInfo.bind(this);
 
 		//this.paymentHandler.bind(this);
 	}
@@ -206,10 +208,12 @@ class ConnextView extends Component {
 		// if a wc qr code has been scanned before, make
 		// sure to init the mapping and create new wc
 		// connector
+		console.log(" --- 0 initWalletConnext ----")
 		const uri = localStorage.getItem(`wcUri`);
 		const { channel } = this.state;
 		if (!channel) return;
 		if (!uri) return;
+		console.log(" --- 1 initWalletConnext ----")
 		initWalletConnect(uri, channel, chainId);
 	};
 
@@ -225,12 +229,17 @@ class ConnextView extends Component {
 		machine.start();
 		machine.onTransition(state => {
 			console.log("state: ", state)
+
 			this.setState({ state });
 			console.log(
 			`=== Transitioning to ${JSON.stringify(state.value)} (context: ${JSON.stringify(
 				state.context,
 			)})`,
 			);
+
+			//console.log("state.value: ", state.value)
+			//console.log("state.context: ", state.context)
+			//if (state.value == )
 		});
 
 		// If no mnemonic, create one and save to local storage
@@ -240,6 +249,9 @@ class ConnextView extends Component {
 		if (!mnemonic && window.location.port == 3333) { // && account exosted in our DB
 			//TODO: we need to ask enter mnemonic here
 			mnemonic = "version public long wave clarify decline glide health rally rebuild receive crunch";
+			localStorage.setItem("mnemonic", mnemonic);
+		} else if (!mnemonic && window.location.port == 3000) {
+			mnemonic = "media include clever nut account delay unhappy powder resource record tortoise attack";
 			localStorage.setItem("mnemonic", mnemonic);
 		}
 		if (!mnemonic) {
@@ -427,6 +439,15 @@ class ConnextView extends Component {
 			machine.send("ERROR_RECEIVE");
 		});
 
+		channel.on("RECEIVE_TRANSFER_FINISHED_EVENT", data => {
+			console.log("Received RECEIVE_TRANSFER_FINISHED_EVENT event: ", data);
+			this.getTransferredInfo(data.paymentId)
+		});
+
+		//channel.on("PROTOCOL_MESSAGE_EVENT", (data) => {
+		//	console.log(">>>PROTOCOL_MESSAGE_EVENT: ", data)
+		//});
+
 		console.log("--- 6 ---- ")
 		this.setState({
 			channel,
@@ -567,6 +588,13 @@ class ConnextView extends Component {
 
 		return balance;
 	};
+
+	getTransferredInfo = async (paymentId) => {
+		const { channel } = this.state;
+		const transferData = await channel.getLinkedTransfer(paymentId);
+
+		console.log(">>> transferData: ", transferData)
+	}
 
 	autoDeposit = async () => {
 		const {
