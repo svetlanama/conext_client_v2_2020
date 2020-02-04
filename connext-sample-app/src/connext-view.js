@@ -424,24 +424,25 @@ class ConnextView extends Component {
 			this.setState({ swapRate: res.swapRate });
 		});
 
-		channel.on("RECIEVE_TRANSFER_STARTED", data => {
-			console.log("Received RECIEVE_TRANSFER_STARTED event: ", data);
+		channel.on("RECEIVE_TRANSFER_STARTED_EVENT", data => {
+			console.log("Received RECEIVE_TRANSFER_STARTED_EVENT event: ", data);
 			machine.send("START_RECEIVE");
 		});
 
-		channel.on("RECIEVE_TRANSFER_FINISHED", data => {
+		/*channel.on("RECIEVE_TRANSFER_FINISHED", data => {
 			console.log("Received RECIEVE_TRANSFER_FINISHED event: ", data);
 			machine.send("SUCCESS_RECEIVE");
-		});
+		});*/
 
-		channel.on("RECIEVE_TRANSFER_FAILED", data => {
-			console.log("Received RECIEVE_TRANSFER_FAILED event: ", data);
+		channel.on("RECEIVE_TRANSFER_FAILED_EVENT", data => {
+			console.log("Received RECEIVE_TRANSFER_FAILED_EVENT event: ", data);
 			machine.send("ERROR_RECEIVE");
 		});
 
 		channel.on("RECEIVE_TRANSFER_FINISHED_EVENT", data => {
 			console.log("Received RECEIVE_TRANSFER_FINISHED_EVENT event: ", data);
 			this.getTransferredInfo(data.paymentId)
+			machine.send("SUCCESS_RECEIVE");
 		});
 
 		//channel.on("PROTOCOL_MESSAGE_EVENT", (data) => {
