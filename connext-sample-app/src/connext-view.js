@@ -2,7 +2,7 @@ import React, { Component }  from 'react'
 import * as connext from "@connext/client"
 import { CF_PATH, ConnextClientStorePrefix } from "@connext/types"
 import { ConnextStore, PisaClientBackupAPI } from "@connext/store"
-//import AsyncStorage from "@react-native-community/async-storage"
+
 import { Button, CircularProgress, Grid, InputAdornment, Modal, TextField, Tooltip, Typography, withStyles, } from "@material-ui/core"
 import { toBN, inverse, minBN, tokenToWei, weiToToken } from './utils/bn'
 import { Currency }  from './utils/currency'
@@ -10,8 +10,6 @@ import { Contract, ethers as eth } from "ethers"
 
 import { AddressZero, Zero } from "ethers/constants";
 import { formatEther, parseEther } from "ethers/utils"
-//import { hexlify, randomBytes } from "ethers/utils";
-//import { ConnextEvents } from "@connext/types";
 
 // backup service
 import { PisaClient } from "pisa-client";
@@ -20,14 +18,13 @@ import { paymentHandler } from "./util/sender"
 import { cashoutEther, cashoutTokens} from "./util/cashout"
 
 // TODO: ged rid off if possible
-import interval from "interval-promise"; // TODO: don not install and replace to setInterval
+import interval from "interval-promise"; // TODO: don not install and replace with setInterval
 import { rootMachine } from "./state/root";
 import { interpret } from "xstate";
 import { cleanWalletConnect,initWalletConnect } from "./utils/clientWalletConnectMapping";
 import { fromExtendedKey, fromMnemonic } from "ethers/utils/hdnode";
 
-// TODO: recheck why we need this
-// TODO: avoid autoswap
+// we need autoswap
 import tokenArtifacts from "openzeppelin-solidity/build/contracts/ERC20Mintable.json";
 
 const styles = theme => ({
@@ -254,7 +251,6 @@ class ConnextView extends Component {
 			localStorage.setItem("mnemonic", mnemonic);
 		}
 
-		console.log("--- 1 ---- ")
 		//TODO: re-check what is useWalletConnext
 		let wallet;
 		await ethProvider.ready;
@@ -275,7 +271,6 @@ class ConnextView extends Component {
 		machine.send("START");
 		machine.send(["START", "START_START"]);
 
-		console.log("--- 2 ---- ")
 		// if choose mnemonic
 		let channel;
 		if (!useWalletConnext) {
@@ -308,16 +303,12 @@ class ConnextView extends Component {
 				 //.then(() => {})
 				//console.log(">>> restoreRes:  ", restoreRes)
 
-				//console.log("--- 2.0 ---- ")
 				//store = new ConnextStore(window.localStorage);
 			} else {
-				console.log("--- 2.1 ---- ")
 				store = new ConnextStore(window.localStorage);
 			}
 
-			console.log("--- 3 ---- ")
 			console.log("--- store:", store)
-			console.log("--- ConnextClientStorePrefix:", ConnextClientStorePrefix)
 
 			// If store has double prefixes, flush and restore
 			for (const k of Object.keys(localStorage)) {
@@ -330,52 +321,32 @@ class ConnextView extends Component {
 
 			}
 
-			console.log("--- 4 ---- ")
 			const hdNode = fromExtendedKey(fromMnemonic(mnemonic).extendedKey).derivePath(CF_PATH);
 			const xpub = hdNode.neuter().extendedKey;
 			const keyGen = index => {
 				const res = hdNode.derivePath(index);
 				return Promise.resolve(res.privateKey);
 			};
-			console.log("--- 4.1 ---- ")
+
 			console.log("keyGen:  ", keyGen)
 			console.log("xpub:  ", xpub)
-			//try {
-				channel = await connext.connect({
-					ethProviderUrl: urls.ethProviderUrl,
-					keyGen,
-					logLevel: LOG_LEVEL,
-					nodeUrl: urls.nodeUrl,
-					store,
-					xpub,
-				});
 
-				console.log(`mnemonic address: ${wallet.address} (path: ${wallet.path})`);
-				console.log(`xpub address: ${eth.utils.computeAddress(fromExtendedKey(xpub).publicKey)}`);
-				console.log(
-				`keygen address: ${new eth.Wallet(await keyGen("1")).address} (path ${
-				  new eth.Wallet(await keyGen("1")).path
-				})`,
-				);
-			/*} catch {
-				console.error("Some error occurs during connext.connect: ");
+			channel = await connext.connect({
+				ethProviderUrl: urls.ethProviderUrl,
+				keyGen,
+				logLevel: LOG_LEVEL,
+				nodeUrl: urls.nodeUrl,
+				store,
+				xpub,
+			});
 
-				// TODO: clean local storage excpet mnemonic
-				for (const k of Object.keys(localStorage)) {
-					if (k.substring(0, 4).includes(`xpub`)) {
-						//store && (await store.reset());
-						localStorage.removeItem(k);
-						console.error("==== 4.2 store.reset==== ", k);
-						//window.location.reload();
-					} else if (k.includes(`${ConnextClientStorePrefix}/`)) {
-						store && (await store.reset());
-						console.error("==== 4.2 store.reset==== ", k);
-						//window.location.reload();
-					}
-				}
-
-				//window.location.reload();
-			}*/
+			console.log(`mnemonic address: ${wallet.address} (path: ${wallet.path})`);
+			console.log(`xpub address: ${eth.utils.computeAddress(fromExtendedKey(xpub).publicKey)}`);
+			console.log(
+			`keygen address: ${new eth.Wallet(await keyGen("1")).address} (path ${
+			  new eth.Wallet(await keyGen("1")).path
+			})`,
+			);
 
 		} else if (useWalletConnext) {
 			console.error("Configurated useWalletConnext.");
@@ -416,7 +387,6 @@ class ConnextView extends Component {
 		);
 		const swapRate = await channel.getLatestSwapRate(AddressZero, token.address);
 
-		console.log("--- 5 ---- ")
 		console.log(`Client created successfully!`);
 		console.log(` - Public Identifier: ${channel.publicIdentifier}`);
 		console.log(` - Account multisig address: ${channel.multisigAddress}`);
@@ -438,11 +408,6 @@ class ConnextView extends Component {
 			machine.send("START_RECEIVE");
 		});
 
-		/*channel.on("RECIEVE_TRANSFER_FINISHED", data => {
-			console.log("Received RECIEVE_TRANSFER_FINISHED event: ", data);
-			machine.send("SUCCESS_RECEIVE");
-		});*/
-
 		channel.on("RECEIVE_TRANSFER_FAILED_EVENT", data => {
 			console.log("Received RECEIVE_TRANSFER_FAILED_EVENT event: ", data);
 			machine.send("ERROR_RECEIVE");
@@ -458,7 +423,6 @@ class ConnextView extends Component {
 		//	console.log(">>>PROTOCOL_MESSAGE_EVENT: ", data)
 		//});
 
-		console.log("--- 6 ---- ")
 		this.setState({
 			channel,
 			useWalletConnext,
