@@ -1,7 +1,8 @@
 import React, { Component }  from 'react'
 import * as connext from "@connext/client"
-import { CF_PATH, ConnextClientStorePrefix } from "@connext/types";
-import { ConnextStore, PisaClientBackupAPI } from "@connext/store";
+import { CF_PATH, ConnextClientStorePrefix } from "@connext/types"
+import { ConnextStore, PisaClientBackupAPI } from "@connext/store"
+//import AsyncStorage from "@react-native-community/async-storage"
 import { Button, CircularProgress, Grid, InputAdornment, Modal, TextField, Tooltip, Typography, withStyles, } from "@material-ui/core"
 import { toBN, inverse, minBN, tokenToWei, weiToToken } from './utils/bn'
 import { Currency }  from './utils/currency'
@@ -108,7 +109,7 @@ const xpubUser2="xpub6FEJYdkRnJdDcqjLXxZyqswNXPCFz9Qa1UNVTumEAyX3kM6XnW2rxv2nSAw
 //const xpubUser2 ="xpub6EPbieML9jjSdMFFtJVACZHezv8f5SZeyWm1gne6TXwWpqKBKRvQ89AWsUKsqy9xdMrA59pK26i2Gk6Uh6wuXjZCJUTZfm3vGNkKeBLnQro"
 
 // dai example
-//const xpubUser2 = "xpub6ErQntFmhG2DRw2FBsYfPuKVrsJRdw8opUk44E2aKznSnypjTSrNzA2TbAb2j6eEV4UHNDYF9HvgGhDXAMWhnR77q1KccjJrJaKmMCcahtu"
+//const xpubUser2 = "xpub6EV2vWPV9CTEbU6ZjYxxe6Fd17R7c5mWuQHhggeQTLWZDzU7pVYWiSB9djqop2jkaxTY4Ex1qnB8WhXtyQKoMTioxSgEsMyxm9uxX9WqmxB"
 
 class ConnextView extends Component {
 
@@ -208,12 +209,10 @@ class ConnextView extends Component {
 		// if a wc qr code has been scanned before, make
 		// sure to init the mapping and create new wc
 		// connector
-		console.log(" --- 0 initWalletConnext ----")
 		const uri = localStorage.getItem(`wcUri`);
 		const { channel } = this.state;
 		if (!channel) return;
 		if (!uri) return;
-		console.log(" --- 1 initWalletConnext ----")
 		initWalletConnect(uri, channel, chainId);
 	};
 
@@ -236,10 +235,6 @@ class ConnextView extends Component {
 				state.context,
 			)})`,
 			);
-
-			//console.log("state.value: ", state.value)
-			//console.log("state.context: ", state.context)
-			//if (state.value == )
 		});
 
 		// If no mnemonic, create one and save to local storage
@@ -290,15 +285,28 @@ class ConnextView extends Component {
 				console.error("Configurated pisaUrl:", wallet);
 				//TODO: uncomment implementation
 
+				var pisaClient = new PisaClient(
+				  pisaUrl,
+				  "0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", //PISA_CONTRACT_ADDRESS TODO: Don't hardcode
+				)
 				console.log(`Using external state backup service: ${pisaUrl}`);
 				const backupService = new PisaClientBackupAPI({
 				  wallet,
-				  pisaClient: new PisaClient(
-					pisaUrl,
-					"0xa4121F89a36D1908F960C2c9F057150abDb5e1E3", //PISA_CONTRACT_ADDRESS TODO: Don't hardcode
-				  ),
+				  pisaClient: pisaClient,
 				});
 				store = new ConnextStore(window.localStorage, { backupService });
+
+				/*store = new ConnextStore(window.localStorage, {
+					prefix: "KUKU",
+					separator: "/",
+					backupService: backupService,
+					wallet: wallet,
+				});*/
+
+
+				 //backupService.restore()
+				 //.then(() => {})
+				//console.log(">>> restoreRes:  ", restoreRes)
 
 				//console.log("--- 2.0 ---- ")
 				//store = new ConnextStore(window.localStorage);
@@ -316,6 +324,7 @@ class ConnextView extends Component {
 				if (k.includes(`${ConnextClientStorePrefix}:${ConnextClientStorePrefix}/`)) {
 				//if (k.includes(`${ConnextClientStorePrefix}/`)) {
 					store && (await store.reset());
+					console.log("... has double prefixes, flush and restore ...")
 					window.location.reload();
 				}
 
